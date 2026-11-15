@@ -13,18 +13,42 @@
   main{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;padding:2rem;box-sizing:border-box;text-align:center}
   img{width:96px;height:96px}
   a{color:#FFD34E;font-size:1.05rem}
-  p{margin:0;color:#CBC5B8;font-size:.95rem}
+  p{margin:0;color:#CBC5B8;font-size:.95rem;max-width:22rem;line-height:1.45}
+  button{font:600 1rem/1 system-ui,sans-serif;background:#FFD34E;color:#121110;border:0;border-radius:.6rem;padding:.95rem 1.4rem;min-height:48px;cursor:pointer}
+  #ayuda{font-size:.85rem;color:#A39D90}
 </style>
 </head>
 <body>
 <main>
   <img src="icono-192.png" alt="" width="96" height="96">
-  <p>Abriendo la edición de esta semana…</p>
-  <a href="https://claude.ai/artifact/DE7B4TrSesgbkAEXLsRvrT">Abrir El Semanal</a>
+  <p id="msg">Instale El Semanal en su pantalla de inicio. Desde el icono se abre directo la edición de la semana.</p>
+  <button id="instalar" type="button" hidden>Instalar El Semanal</button>
+  <p id="ayuda">Si no aparece el botón: menú ⋮ de Chrome → Instalar app.</p>
+  <a href="https://claude.ai/artifact/DE7B4TrSesgbkAEXLsRvrT">Abrir la edición sin instalar</a>
 </main>
 <script>
   if ("serviceWorker" in navigator) { navigator.serviceWorker.register("sw.js").catch(function(){}); }
-  setTimeout(function(){ location.replace("https://claude.ai/artifact/DE7B4TrSesgbkAEXLsRvrT"); }, 400);
+  var EDICION = "https://claude.ai/artifact/DE7B4TrSesgbkAEXLsRvrT";
+  var desdeIcono = /[?&]app=1/.test(location.search) ||
+    window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (desdeIcono) {
+    document.getElementById("msg").textContent = "Abriendo la edición de esta semana…";
+    document.getElementById("ayuda").hidden = true;
+    location.replace(EDICION);
+  }
+  var aviso = null, boton = document.getElementById("instalar");
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault(); aviso = e; boton.hidden = false;
+    document.getElementById("ayuda").hidden = true;
+  });
+  boton.addEventListener("click", function () {
+    if (!aviso) return;
+    aviso.prompt();
+    aviso.userChoice.finally(function () { aviso = null; boton.hidden = true; });
+  });
+  window.addEventListener("appinstalled", function () {
+    document.getElementById("msg").textContent = "Listo. Ya puede abrir El Semanal desde su pantalla de inicio.";
+  });
 </script>
 </body>
 </html>
